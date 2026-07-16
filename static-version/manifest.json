@@ -1,0 +1,26 @@
+{
+  "name": "Banco de Bogotá",
+  "short_name": "Bco. Bogotá",
+  "description": "Banca Móvil - contenido ficticio para producción audiovisual",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#14327D",
+  "background_color": "#14327D",
+  "lang": "es-CO",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

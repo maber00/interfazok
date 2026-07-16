@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#14327D">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bco. Bogotá">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Banco de Bogotá — Banca Móvil</title>
+<style>
+  :root{
+    --azul:#14327D;
+    --rojo:#CD3232;
+    --amarillo:#EBB932;
+    --blanco:#FFFFFF;
+    --gris-texto:#4A4A4A;
+    --gris-fondo:#F5F5F5;
+    --verde:#1E9E5A;
+    --sombra:0 2px 12px rgba(20,50,125,0.10);
+    --sombra-fuerte:0 4px 20px rgba(20,50,125,0.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:var(--azul);
+    color:var(--gris-texto);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{
+    max-width:460px;
+    margin:0 auto;
+    height:100vh;
+    height:100dvh;
+    background:var(--gris-fondo);
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ===== Status bar simulada ===== */
+  .statusbar{
+    height:34px;
+    background:var(--azul);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 16px;
+    font-size:13px;
+    font-weight:600;
+    flex-shrink:0;
+    padding-top:env(safe-area-inset-top,0);
+  }
+  .statusbar.light{background:#fff;color:var(--azul);}
+  .statusbar .icons{display:flex;align-items:center;gap:6px;}
+  .statusbar .battery{
+    width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;
+    position:relative;padding:1px;
+  }
+  .statusbar .battery::after{content:"";position:absolute;right:-3px;top:3px;width:2px;height:5px;background:currentColor;border-radius:0 1px 1px 0;}
+  .statusbar .battery i{display:block;height:100%;width:80%;background:currentColor;border-radius:1px;}
+  .signal{display:flex;align-items:flex-end;gap:1.5px;height:11px;}
+  .signal span{width:3px;background:currentColor;border-radius:1px;}
+  .signal span:nth-child(1){height:4px;}
+  .signal span:nth-child(2){height:6px;}
+  .signal span:nth-child(3){height:8px;}
+  .signal span:nth-child(4){height:11px;}
+
+  /* ===== Contenedor de pantallas ===== */
+  .screens{flex:1;position:relative;overflow:hidden;}
+  .screen{
+    position:absolute;inset:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    background:var(--gris-fondo);
+    display:none;
+    flex-direction:column;
+    animation:fadeIn .3s ease;
+  }
+  .screen.active{display:flex;}
+  @keyframes fadeIn{from{opacity:0;transform:translateX(12px);}to{opacity:1;transform:translateX(0);}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ===== Botones / ripple ===== */
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+  .btn{
+    position:relative;overflow:hidden;
+    background:var(--azul);color:#fff;
+    border-radius:14px;padding:15px;width:100%;
+    font-size:16px;font-weight:700;
+    transition:transform .1s, box-shadow .2s;
+  }
+  .btn:active{transform:scale(.985);}
+  .btn.secundario{background:#fff;color:var(--azul);border:1.5px solid var(--azul);}
+  .btn:disabled{opacity:.5;}
+  .ripple{position:absolute;border-radius:50%;transform:scale(0);background:rgba(255,255,255,.45);animation:rip .55s linear;pointer-events:none;}
+  .btn.secundario .ripple{background:rgba(20,50,125,.18);}
+  @keyframes rip{to{transform:scale(2.6);opacity:0;}}
+
+  /* ===== Header azul interno ===== */
+  .topbar{
+    background:var(--azul);color:#fff;
+    padding:14px 18px;display:flex;align-items:center;gap:14px;flex-shrink:0;
+  }
+  .topbar .back{font-size:26px;line-height:1;width:28px;}
+  .topbar h1{font-size:18px;font-weight:700;}
+
+  /* ===== LOGIN ===== */
+  #login{background:#fff;padding:0 26px;justify-content:center;}
+  .login-inner{margin:auto 0;width:100%;padding:30px 0;animation:fadeInUp .5s ease;}
+  .logo-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:8px;}
+  .logo-row{display:flex;align-items:center;gap:12px;}
+  .logo-text{font-size:21px;font-weight:800;color:var(--azul);letter-spacing:-.3px;line-height:1;}
+  .login-sub{text-align:center;color:var(--gris-texto);font-size:15px;margin-bottom:30px;font-weight:600;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:13px;font-weight:600;color:var(--azul);margin-bottom:6px;}
+  .field input,.field select{
+    width:100%;padding:14px;border:1.5px solid #d8ddea;border-radius:12px;
+    font-size:16px;color:var(--gris-texto);background:#fff;font-family:inherit;
+    transition:border-color .2s;
+  }
+  .field input:focus,.field select:focus{outline:none;border-color:var(--azul);}
+  .forgot{display:block;text-align:center;color:var(--rojo);font-size:14px;font-weight:600;margin-top:18px;text-decoration:none;}
+  .login-footer{text-align:center;font-size:11px;color:#9aa0ad;margin-top:40px;line-height:1.6;}
+  .vigilado{display:inline-block;margin-top:4px;font-weight:600;}
+
+  /* ===== Loader ===== */
+  #loader{position:absolute;inset:0;background:var(--azul);display:none;flex-direction:column;align-items:center;justify-content:center;gap:22px;z-index:200;}
+  #loader.show{display:flex;}
+  .spinner{width:54px;height:54px;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #loader p{color:#fff;font-weight:600;font-size:15px;}
+
+  /* ===== HOME ===== */
+  .home-header{background:var(--azul);color:#fff;padding:12px 18px 22px;border-radius:0 0 22px 22px;flex-shrink:0;}
+  .hh-top{display:flex;align-items:center;justify-content:space-between;}
+  .hh-top .left{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;}
+  .hh-actions{display:flex;align-items:center;gap:16px;}
+  .icon-btn{position:relative;width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
+  .badge{position:absolute;top:-3px;right:-4px;background:var(--rojo);color:#fff;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+  .avatar-mini{width:34px;height:34px;border-radius:50%;background:var(--amarillo);color:var(--azul);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;}
+  .greeting{margin-top:18px;}
+  .greeting .small{font-size:14px;opacity:.85;}
+  .greeting .name{font-size:21px;font-weight:800;margin-top:2px;}
+
+  .content{padding:18px;display:flex;flex-direction:column;gap:18px;padding-bottom:90px;}
+
+  .saldo-card{background:#fff;border-radius:18px;box-shadow:var(--sombra);padding:20px;margin-top:-34px;animation:fadeInUp .4s ease;}
+  .saldo-card .label{font-size:13px;color:#8b91a0;font-weight:600;}
+  .saldo-card .acct{font-size:15px;color:var(--azul);font-weight:700;letter-spacing:1px;margin-top:2px;}
+  .saldo-row{display:flex;align-items:flex-end;justify-content:space-between;margin-top:16px;}
+  .saldo-disp{font-size:12px;color:#8b91a0;font-weight:600;}
+  .saldo-monto{font-size:30px;font-weight:800;color:var(--azul);letter-spacing:-.5px;margin-top:2px;}
+  .eye{font-size:20px;padding:6px;color:#8b91a0;}
+  .saldo-acciones{display:flex;gap:10px;margin-top:18px;}
+  .saldo-acciones .btn{padding:11px;font-size:14px;border-radius:11px;}
+
+  .quick{background:#fff;border-radius:18px;box-shadow:var(--sombra);padding:18px 10px;}
+  .quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 4px;}
+  .quick-item{display:flex;flex-direction:column;align-items:center;gap:7px;background:none;}
+  .quick-ic{width:48px;height:48px;border-radius:14px;background:#eef1f9;display:flex;align-items:center;justify-content:center;font-size:22px;transition:transform .12s;}
+  .quick-item:active .quick-ic{transform:scale(.9);}
+  .quick-item span{font-size:11px;color:var(--gris-texto);font-weight:600;text-align:center;line-height:1.2;}
+
+  .section-title{display:flex;align-items:center;justify-content:space-between;padding:0 2px;}
+  .section-title h2{font-size:16px;color:var(--azul);font-weight:800;}
+  .section-title a{font-size:13px;color:var(--rojo);font-weight:600;text-decoration:none;}
+
+  .mov-list{background:#fff;border-radius:18px;box-shadow:var(--sombra);overflow:hidden;}
+  .mov{display:flex;align-items:center;gap:13px;padding:14px 16px;border-bottom:1px solid #f0f1f5;}
+  .mov:last-child{border-bottom:none;}
+  .mov-ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+  .mov-info{flex:1;min-width:0;}
+  .mov-info .desc{font-size:14px;font-weight:700;color:#2c3140;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mov-info .date{font-size:12px;color:#9aa0ad;margin-top:2px;}
+  .mov-amt{font-size:14.5px;font-weight:800;white-space:nowrap;}
+  .neg{color:var(--rojo);}
+  .pos{color:var(--verde);}
+
+  .ver-todos{width:100%;text-align:center;padding:14px;color:var(--azul);font-weight:700;font-size:14px;background:#fff;border-radius:14px;box-shadow:var(--sombra);}
+
+  /* ===== Bottom nav ===== */
+  .bottomnav{
+    position:absolute;bottom:0;left:0;right:0;
+    background:#fff;display:flex;justify-content:space-around;
+    box-shadow:0 -2px 14px rgba(20,50,125,.10);
+    padding:8px 0 calc(8px + env(safe-area-inset-bottom,0));
+    z-index:50;
+  }
+  .nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;color:#9aa0ad;font-size:10.5px;font-weight:600;padding:4px 12px;flex:1;}
+  .nav-item svg{width:23px;height:23px;}
+  .nav-item.active{color:var(--azul);}
+
+  /* ===== Movimientos screen ===== */
+  .month-sel{display:flex;align-items:center;justify-content:center;gap:24px;padding:14px;background:#fff;}
+  .month-sel button{font-size:24px;color:var(--azul);padding:4px 10px;}
+  .month-sel .m{font-weight:700;color:var(--azul);font-size:15px;min-width:130px;text-align:center;}
+  .resumen{display:flex;gap:12px;padding:14px 18px;}
+  .res-card{flex:1;background:#fff;border-radius:14px;padding:13px;box-shadow:var(--sombra);}
+  .res-card .l{font-size:12px;color:#8b91a0;font-weight:600;}
+  .res-card .v{font-size:16px;font-weight:800;margin-top:3px;}
+  .tabs{display:flex;gap:8px;padding:0 18px 8px;}
+  .tab{flex:1;padding:9px;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#8b91a0;box-shadow:var(--sombra);}
+  .tab.active{background:var(--azul);color:#fff;}
+
+  /* ===== Transferencias ===== */
+  .form-wrap{padding:18px;display:flex;flex-direction:column;gap:14px;padding-bottom:30px;}
+  .steps{display:flex;align-items:center;justify-content:center;gap:6px;padding:14px;}
+  .step-dot{width:9px;height:9px;border-radius:50%;background:#cfd4e2;transition:.3s;}
+  .step-dot.active{background:var(--amarillo);width:24px;border-radius:5px;}
+  .radio-group{display:flex;gap:10px;}
+  .radio-opt{flex:1;padding:14px;border:1.5px solid #d8ddea;border-radius:12px;text-align:center;font-size:13px;font-weight:700;color:var(--gris-texto);background:#fff;}
+  .radio-opt.active{border-color:var(--azul);background:#eef1f9;color:var(--azul);}
+  .saldo-info{background:#eef1f9;border-radius:12px;padding:12px 14px;font-size:13px;color:var(--azul);font-weight:600;text-align:center;}
+  .monto-input{text-align:center;font-size:34px;font-weight:800;color:var(--azul);border:none;border-bottom:2px solid #d8ddea;border-radius:0;padding:14px;}
+  .monto-input:focus{border-bottom-color:var(--azul);}
+  .otp-row{display:flex;gap:9px;justify-content:center;margin:10px 0;}
+  .otp-row input{width:46px;height:56px;text-align:center;font-size:24px;font-weight:800;border:1.5px solid #d8ddea;border-radius:12px;color:var(--azul);}
+  .otp-row input:focus{outline:none;border-color:var(--azul);}
+
+  /* ===== Éxito ===== */
+  .exito{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:8px;flex:1;}
+  .check-circle{width:96px;height:96px;border-radius:50%;background:var(--verde);display:flex;align-items:center;justify-content:center;margin-bottom:14px;animation:pop .4s cubic-bezier(.17,.67,.4,1.4);}
+  @keyframes pop{0%{transform:scale(0);}100%{transform:scale(1);}}
+  .check-circle svg{width:50px;height:50px;}
+  .check-circle svg path{stroke-dasharray:48;stroke-dashoffset:48;animation:draw .5s .25s forwards;}
+  @keyframes draw{to{stroke-dashoffset:0;}}
+  .exito h2{font-size:22px;color:var(--azul);font-weight:800;}
+  .exito .monto-ex{font-size:30px;font-weight:800;color:var(--verde);margin:6px 0;}
+  .exito .detalle{background:#fff;border-radius:14px;box-shadow:var(--sombra);padding:16px;width:100%;margin:14px 0;}
+  .exito .detalle div{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;gap:14px;}
+  .exito .detalle .k{color:#8b91a0;}
+  .exito .detalle .v{font-weight:700;color:#2c3140;text-align:right;}
+
+  /* ===== Perfil ===== */
+  .perfil-head{background:var(--azul);color:#fff;display:flex;flex-direction:column;align-items:center;padding:24px;gap:10px;}
+  .avatar-big{width:84px;height:84px;border-radius:50%;background:var(--amarillo);color:var(--azul);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;}
+  .perfil-head .pname{font-size:19px;font-weight:800;text-align:center;}
+  .perfil-head .pdata{font-size:13px;opacity:.9;}
+  .perfil-info{background:#fff;margin:16px;border-radius:16px;box-shadow:var(--sombra);overflow:hidden;}
+  .pinfo-row{display:flex;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #f0f1f5;font-size:14px;}
+  .pinfo-row:last-child{border-bottom:none;}
+  .pinfo-row .k{color:#8b91a0;}
+  .pinfo-row .v{font-weight:600;color:#2c3140;}
+  .menu-list{background:#fff;margin:0 16px;border-radius:16px;box-shadow:var(--sombra);overflow:hidden;}
+  .menu-row{display:flex;align-items:center;gap:14px;padding:16px;border-bottom:1px solid #f0f1f5;font-size:15px;font-weight:600;color:#2c3140;width:100%;text-align:left;}
+  .menu-row:last-child{border-bottom:none;}
+  .menu-row .mic{font-size:18px;width:24px;text-align:center;}
+  .menu-row .arrow{margin-left:auto;color:#cfd4e2;font-size:18px;}
+  .menu-row.danger{color:var(--rojo);}
+  .perfil-footer{text-align:center;font-size:11px;color:#9aa0ad;padding:24px;line-height:1.6;}
+
+  /* ===== Pull to refresh ===== */
+  .ptr{position:absolute;top:0;left:0;right:0;display:flex;justify-content:center;padding-top:8px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10;}
+  .ptr .spin-small{width:24px;height:24px;border:3px solid rgba(20,50,125,.2);border-top-color:var(--azul);border-radius:50%;}
+  .ptr.show{opacity:1;}
+  .ptr.spinning .spin-small{animation:spin .7s linear infinite;}
+
+  /* Toast */
+  .toast{position:absolute;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#2c3140;color:#fff;padding:11px 20px;border-radius:24px;font-size:13px;font-weight:600;opacity:0;transition:.3s;z-index:300;white-space:nowrap;max-width:90%;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Status bar -->
+  <div class="statusbar" id="statusbar">
+    <span id="clock">--:--</span>
+    <div class="icons">
+      <span class="signal"><span></span><span></span><span></span><span></span></span>
+      <span style="font-size:11px;font-weight:700;">5G</span>
+      <span class="battery"><i></i></span>
+    </div>
+  </div>
+
+  <div class="screens">
+
+    <!-- ============ PANTALLA 1 — LOGIN ============ -->
+    <section class="screen active" id="login">
+      <div class="login-inner">
+        <div class="logo-wrap">
+          <div class="logo-row" id="loginLogo"></div>
+          <div class="logo-text">Banco de Bogotá</div>
+        </div>
+        <p class="login-sub">Banca Móvil</p>
+
+        <div class="field">
+          <label>Tipo de documento</label>
+          <select id="docType">
+            <option value="CC">Cédula de Ciudadanía (CC)</option>
+            <option value="CE">Cédula de Extranjería (CE)</option>
+            <option value="NIT">NIT</option>
+            <option value="PA">Pasaporte</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Número de documento</label>
+          <input type="text" inputmode="numeric" id="docNum" placeholder="1.023.456.789" value="1.023.456.789">
+        </div>
+        <div class="field">
+          <label>Clave</label>
+          <input type="password" id="pass" placeholder="••••••••" value="123456">
+        </div>
+
+        <button class="btn" onclick="doLogin(this)">Ingresar</button>
+        <a class="forgot" href="#" onclick="toast('Función no disponible en la demo');return false;">¿Olvidaste tu clave?</a>
+
+        <div class="login-footer">
+          © 2025 Banco de Bogotá S.A.<br>
+          <span class="vigilado">Vigilado Superfinanciera</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PANTALLA 2 — HOME ============ -->
+    <section class="screen" id="home">
+      <div class="ptr" id="ptr"><div class="spin-small"></div></div>
+      <div class="home-header">
+        <div class="hh-top">
+          <div class="left" id="homeLogo"></div>
+          <div class="hh-actions">
+            <button class="icon-btn" onclick="toast('No tienes notificaciones nuevas')">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <span class="badge">3</span>
+            </button>
+            <button class="avatar-mini" onclick="go('perfil')">CM</button>
+          </div>
+        </div>
+        <div class="greeting">
+          <div class="small" id="greetText">Buen día,</div>
+          <div class="name">Carlos Andrés Martínez</div>
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- Saldo -->
+        <div class="saldo-card">
+          <div class="label">Cuenta de Ahorros</div>
+          <div class="acct">047 **** **** 4821</div>
+          <div class="saldo-row">
+            <div>
+              <div class="saldo-disp">Saldo disponible</div>
+              <div class="saldo-monto" id="saldoMonto">$635.000.000</div>
+            </div>
+            <button class="eye" id="eyeBtn" onclick="toggleSaldo()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="saldo-acciones">
+            <button class="btn" onclick="go('transferir')">Transferir</button>
+            <button class="btn secundario" onclick="go('movimientos')">Extracto</button>
+          </div>
+        </div>
+
+        <!-- Accesos rápidos -->
+        <div class="quick">
+          <div class="quick-grid" id="quickGrid"></div>
+        </div>
+
+        <!-- Movimientos -->
+        <div class="section-title">
+          <h2>Últimos movimientos</h2>
+        </div>
+        <div class="mov-list" id="homeMovs"></div>
+        <button class="ver-todos" onclick="go('movimientos')">Ver todos los movimientos</button>
+      </div>
+    </section>
+
+    <!-- ============ PANTALLA 3 — MOVIMIENTOS ============ -->
+    <section class="screen" id="movimientos">
+      <div class="topbar">
+        <button class="back" onclick="go('home')">‹</button>
+        <h1>Movimientos</h1>
+      </div>
+      <div class="month-sel">
+        <button onclick="changeMonth(-1)">‹</button>
+        <span class="m" id="monthLabel">Junio 2025</span>
+        <button onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="resumen">
+        <div class="res-card"><div class="l">Ingresos</div><div class="v pos">+$8.575.000</div></div>
+        <div class="res-card"><div class="l">Egresos</div><div class="v neg">-$2.809.400</div></div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-f="all" onclick="filterMov(this,'all')">Todos</button>
+        <button class="tab" data-f="deb" onclick="filterMov(this,'deb')">Débitos</button>
+        <button class="tab" data-f="cre" onclick="filterMov(this,'cre')">Créditos</button>
+      </div>
+      <div style="padding:0 18px 30px;">
+        <div class="mov-list" id="allMovs"></div>
+      </div>
+    </section>
+
+    <!-- ============ PANTALLA 4 — TRANSFERIR ============ -->
+    <section class="screen" id="transferir">
+      <div class="topbar">
+        <button class="back" onclick="transferBack()">‹</button>
+        <h1>Transferir dinero</h1>
+      </div>
+      <div class="steps">
+        <div class="step-dot active" id="sd1"></div>
+        <div class="step-dot" id="sd2"></div>
+        <div class="step-dot" id="sd3"></div>
+      </div>
+
+      <!-- Paso 1 -->
+      <div class="form-wrap" id="tStep1">
+        <div class="field"><label>Destino</label>
+          <div class="radio-group">
+            <button class="radio-opt active" id="ro1" onclick="setDest(this,'bdb')">A cuenta Banco de Bogotá</button>
+            <button class="radio-opt" id="ro2" onclick="setDest(this,'otro')">A otro banco</button>
+          </div>
+        </div>
+        <div class="field" id="bankField" style="display:none;">
+          <label>Banco destino</label>
+          <select id="bankSel">
+            <option>Bancolombia</option><option>Davivienda</option><option>BBVA Colombia</option>
+            <option>Banco de Occidente</option><option>Banco Popular</option><option>Banco Caja Social</option>
+            <option>Scotiabank Colpatria</option><option>Banco AV Villas</option><option>Banco Agrario</option>
+            <option>Nequi</option><option>Daviplata</option><option>Banco Falabella</option>
+          </select>
+        </div>
+        <div class="field"><label>Número de cuenta destino</label>
+          <input type="text" inputmode="numeric" id="acctDest" placeholder="Ej: 123 456 7890" oninput="autocomplete()">
+        </div>
+        <div class="field"><label>Nombre beneficiario</label>
+          <input type="text" id="benef" placeholder="Se completa automáticamente">
+        </div>
+        <button class="btn" onclick="toStep2()">Continuar</button>
+      </div>
+
+      <!-- Paso 2 -->
+      <div class="form-wrap" id="tStep2" style="display:none;">
+        <div class="saldo-info">Saldo disponible: $635.000.000</div>
+        <div class="field" style="margin-top:10px;">
+          <label style="text-align:center;">Monto a transferir</label>
+          <input type="text" inputmode="numeric" id="montoInput" class="monto-input" placeholder="$0" oninput="formatMonto(this)">
+        </div>
+        <div class="field"><label>Descripción (opcional)</label>
+          <input type="text" id="descTransf" placeholder="Ej: Pago arriendo">
+        </div>
+        <button class="btn" onclick="toStep3()">Confirmar</button>
+      </div>
+
+      <!-- Paso 3 -->
+      <div class="form-wrap" id="tStep3" style="display:none;">
+        <p style="text-align:center;font-weight:700;color:var(--azul);font-size:16px;">Ingresa tu clave de 6 dígitos</p>
+        <p style="text-align:center;font-size:13px;color:#8b91a0;">Confirma la transferencia con tu clave dinámica</p>
+        <div class="otp-row" id="otpRow"></div>
+      </div>
+
+      <!-- Éxito -->
+      <div class="exito" id="tSuccess" style="display:none;">
+        <div class="check-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+        </div>
+        <h2>¡Transferencia exitosa!</h2>
+        <div class="monto-ex" id="exMonto">$0</div>
+        <div class="detalle">
+          <div><span class="k">Beneficiario</span><span class="v" id="exBenef">—</span></div>
+          <div><span class="k">Cuenta destino</span><span class="v" id="exAcct">—</span></div>
+          <div><span class="k">Fecha</span><span class="v" id="exFecha">—</span></div>
+          <div><span class="k">Comprobante</span><span class="v" id="exComp">—</span></div>
+        </div>
+        <button class="btn" onclick="finishTransfer()">Volver al inicio</button>
+      </div>
+    </section>
+
+    <!-- ============ PANTALLA 5 — PERFIL ============ -->
+    <section class="screen" id="perfil">
+      <div class="topbar">
+        <button class="back" onclick="go('home')">‹</button>
+        <h1>Perfil</h1>
+      </div>
+      <div class="perfil-head">
+        <div class="avatar-big">CM</div>
+        <div class="pname">Carlos Andrés Martínez Rueda</div>
+        <div class="pdata">C.C. 1.023.456.789</div>
+      </div>
+      <div class="perfil-info">
+        <div class="pinfo-row"><span class="k">Email</span><span class="v">c.martinez@email.com</span></div>
+        <div class="pinfo-row"><span class="k">Celular</span><span class="v">310 456 7890</span></div>
+        <div class="pinfo-row"><span class="k">Tarjeta crédito</span><span class="v">**** **** **** 4821</span></div>
+      </div>
+      <div class="menu-list">
+        <button class="menu-row" onclick="toast('Seguridad y claves')"><span class="mic">🔒</span> Seguridad y claves <span class="arrow">›</span></button>
+        <button class="menu-row" onclick="toast('Notificaciones')"><span class="mic">🔔</span> Notificaciones <span class="arrow">›</span></button>
+        <button class="menu-row" onclick="toast('Sucursales y cajeros')"><span class="mic">📍</span> Sucursales y cajeros <span class="arrow">›</span></button>
+        <button class="menu-row" onclick="toast('Líneas de atención: 601 343 0000')"><span class="mic">📞</span> Líneas de atención <span class="arrow">›</span></button>
+        <button class="menu-row" onclick="toast('App Banca Móvil v11.1.1 — contenido ficticio')"><span class="mic">ℹ️</span> Acerca de la app <span class="arrow">›</span></button>
+        <button class="menu-row danger" onclick="logout()"><span class="mic">🚪</span> Cerrar sesión <span class="arrow">›</span></button>
+      </div>
+      <div class="perfil-footer">
+        App Banca Móvil v11.1.1<br>
+        Vigilado Superfinanciera
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Bottom nav -->
+  <nav class="bottomnav" id="bottomnav" style="display:none;">
+    <button class="nav-item active" data-s="home" onclick="go('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+      Inicio
+    </button>
+    <button class="nav-item" data-s="movimientos" onclick="go('movimientos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Movimientos
+    </button>
+    <button class="nav-item" data-s="transferir" onclick="go('transferir')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Pagos
+    </button>
+    <button class="nav-item" data-s="perfil" onclick="go('perfil')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Perfil
+    </button>
+  </nav>
+
+  <!-- Loader -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <p>Verificando tu identidad...</p>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+/* ============================================================
+   Banco de Bogotá — Banca Móvil (SIMULACIÓN / FICCIÓN)
+   Todos los datos son ficticios. Uso en producción audiovisual.
+   ============================================================ */
+
+/* ---------- Logo SVG (símbolo: espirales roja + amarilla) ---------- */
+function logoSVG(size){
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M50 14 A36 36 0 1 0 86 50" stroke="#EBB932" stroke-width="13" stroke-linecap="round"/>
+    <path d="M86 50 L86 78" stroke="#EBB932" stroke-width="13" stroke-linecap="round"/>
+    <path d="M50 36 A22 22 0 1 1 28 58" stroke="#CD3232" stroke-width="13" stroke-linecap="round"/>
+    <path d="M28 58 L28 32" stroke="#CD3232" stroke-width="13" stroke-linecap="round"/>
+  </svg>`;
+}
+
+/* ---------- Datos ficticios ---------- */
+const SALDO = 635000000;
+let saldoVisible = true;
+
+const ICON = {
+  shop:{e:'🛒',bg:'#fde9e9'},
+  salary:{e:'💼',bg:'#e3f5ec'},
+  stream:{e:'🎬',bg:'#fde9e9'},
+  transfer:{e:'↗️',bg:'#fde9e9'},
+  bill:{e:'💡',bg:'#fde9e9'},
+  food:{e:'🍔',bg:'#fde9e9'},
+  fuel:{e:'⛽',bg:'#fde9e9'},
+  health:{e:'➕',bg:'#fde9e9'},
+  in:{e:'💰',bg:'#e3f5ec'}
+};
+
+const movimientosHome = [
+  {ic:'shop',  desc:'Supermercado Éxito',          date:'Hoy 10:23',     amt:-127300},
+  {ic:'salary',desc:'Nómina Grupo Empresarial',    date:'Ayer',          amt:8500000},
+  {ic:'stream',desc:'Netflix Colombia',            date:'Hace 3 días',   amt:-17900},
+  {ic:'transfer',desc:'Transferencia enviada Juan P.', date:'Hace 5 días', amt:-2000000},
+  {ic:'bill',  desc:'Pago EPM',                    date:'Hace 7 días',   amt:-98400}
+];
+
+const movimientosAll = [
+  {ic:'shop',  desc:'Supermercado Éxito',          date:'27 Jun · 10:23', amt:-127300,  t:'deb'},
+  {ic:'salary',desc:'Nómina Grupo Empresarial',    date:'26 Jun · 08:00', amt:8500000,  t:'cre'},
+  {ic:'stream',desc:'Netflix Colombia',            date:'24 Jun · 03:11', amt:-17900,   t:'deb'},
+  {ic:'food',  desc:'Rappi · Domicilio',           date:'23 Jun · 20:45', amt:-54200,   t:'deb'},
+  {ic:'transfer',desc:'Transferencia enviada Juan P.', date:'22 Jun · 14:30', amt:-2000000, t:'deb'},
+  {ic:'fuel',  desc:'EDS Terpel',                  date:'21 Jun · 18:02', amt:-180000,  t:'deb'},
+  {ic:'bill',  desc:'Pago EPM',                    date:'20 Jun · 09:15', amt:-98400,   t:'deb'},
+  {ic:'in',    desc:'Devolución compra',           date:'19 Jun · 11:40', amt:75000,    t:'cre'},
+  {ic:'health',desc:'Droguería Cruz Verde',        date:'18 Jun · 16:20', amt:-42600,   t:'deb'},
+  {ic:'shop',  desc:'Almacenes Falabella',         date:'17 Jun · 13:05', amt:-289000,  t:'deb'}
+];
+
+const quickAccess = [
+  {e:'💸',l:'Transferir',a:()=>go('transferir')},
+  {e:'💳',l:'Pagar',a:()=>toast('Pagar servicios')},
+  {e:'📱',l:'Recargar',a:()=>toast('Recargas')},
+  {e:'📷',l:'QR Pagar',a:()=>toast('Escanear QR')},
+  {e:'🏦',l:'Sucursales',a:()=>toast('Sucursales y cajeros')},
+  {e:'📄',l:'Extractos',a:()=>go('movimientos')},
+  {e:'💰',l:'Préstamos',a:()=>toast('Préstamos')},
+  {e:'⚙️',l:'Configurar',a:()=>go('perfil')}
+];
+
+/* ---------- Utilidades ---------- */
+function fmt(n){
+  const neg = n < 0;
+  const s = Math.abs(n).toLocaleString('es-CO').replace(/,/g,'.');
+  return (neg?'-':'')+'$'+s;
+}
+function fmtPlus(n){ return (n>=0?'+':'')+fmt(n); }
+
+/* ---------- Navegación ---------- */
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  el.scrollTop = 0;
+  const nav = document.getElementById('bottomnav');
+  nav.style.display = (id==='login') ? 'none' : 'flex';
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.classList.toggle('active', n.dataset.s===id);
+  });
+  document.getElementById('statusbar').classList.toggle('light', id==='login');
+  if(id==='transferir') resetTransfer();
+}
+
+/* ---------- Login ---------- */
+function doLogin(btn){
+  const loader = document.getElementById('loader');
+  loader.classList.add('show');
+  setTimeout(()=>{
+    loader.classList.remove('show');
+    go('home');
+  },1500);
+}
+function logout(){
+  document.getElementById('pass').value='123456';
+  go('login');
+  toast('Sesión cerrada');
+}
+
+/* ---------- Saldo ---------- */
+const EYE_OPEN = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+function toggleSaldo(){
+  saldoVisible = !saldoVisible;
+  document.getElementById('saldoMonto').textContent = saldoVisible ? fmt(SALDO) : '$•••.•••.•••';
+  document.getElementById('eyeBtn').innerHTML = saldoVisible ? EYE_OPEN : EYE_OFF;
+}
+
+/* ---------- Saludo según hora ---------- */
+function setGreeting(){
+  const h = new Date().getHours();
+  let g = 'Buen día,';
+  if(h>=12 && h<19) g='Buenas tardes,';
+  else if(h>=19 || h<5) g='Buenas noches,';
+  document.getElementById('greetText').textContent = g;
+}
+
+/* ---------- Render listas ---------- */
+function movRow(m){
+  const info = ICON[m.ic] || ICON.shop;
+  const cls = m.amt>=0?'pos':'neg';
+  return `<div class="mov">
+    <div class="mov-ic" style="background:${info.bg};">${info.e}</div>
+    <div class="mov-info"><div class="desc">${m.desc}</div><div class="date">${m.date}</div></div>
+    <div class="mov-amt ${cls}">${fmtPlus(m.amt)}</div>
+  </div>`;
+}
+function renderHome(){
+  document.getElementById('homeMovs').innerHTML = movimientosHome.map(movRow).join('');
+  document.getElementById('quickGrid').innerHTML = quickAccess.map((q,i)=>
+    `<button class="quick-item" data-q="${i}"><div class="quick-ic">${q.e}</div><span>${q.l}</span></button>`
+  ).join('');
+  document.querySelectorAll('.quick-item').forEach(b=>{
+    b.onclick = ()=> quickAccess[b.dataset.q].a();
+  });
+}
+let currentFilter='all';
+function renderAll(){
+  const list = movimientosAll.filter(m=> currentFilter==='all' || m.t===currentFilter);
+  document.getElementById('allMovs').innerHTML = list.map(movRow).join('') || '<div style="padding:30px;text-align:center;color:#9aa0ad;">Sin movimientos</div>';
+}
+function filterMov(btn,f){
+  currentFilter=f;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+/* ---------- Selector de mes (estético) ---------- */
+const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+let monthIdx=5, yearVal=2025;
+function changeMonth(d){
+  monthIdx+=d;
+  if(monthIdx>11){monthIdx=0;yearVal++;}
+  if(monthIdx<0){monthIdx=11;yearVal--;}
+  document.getElementById('monthLabel').textContent = `${meses[monthIdx]} ${yearVal}`;
+}
+
+/* ---------- Transferencias ---------- */
+let destType='bdb';
+function setDest(btn,type){
+  destType=type;
+  document.getElementById('ro1').classList.toggle('active',type==='bdb');
+  document.getElementById('ro2').classList.toggle('active',type==='otro');
+  document.getElementById('bankField').style.display = type==='otro'?'block':'none';
+}
+const nombresFicticios=['María Fernanda López','Andrés Felipe Gómez','Laura Catalina Ríos','Santiago Herrera M.','Diana Carolina Ruiz','Juan David Torres'];
+function autocomplete(){
+  const v=document.getElementById('acctDest').value.replace(/\D/g,'');
+  const b=document.getElementById('benef');
+  if(v.length>=6){
+    const idx = parseInt(v.slice(-1)) % nombresFicticios.length;
+    b.value = nombresFicticios[idx];
+  } else { b.value=''; }
+}
+function showStep(n){
+  ['tStep1','tStep2','tStep3','tSuccess'].forEach(id=>document.getElementById(id).style.display='none');
+  ['sd1','sd2','sd3'].forEach((id,i)=>document.getElementById(id).classList.toggle('active', i<n));
+  if(n===1)document.getElementById('tStep1').style.display='flex';
+  if(n===2)document.getElementById('tStep2').style.display='flex';
+  if(n===3)document.getElementById('tStep3').style.display='flex';
+  if(n===4){
+    document.getElementById('tSuccess').style.display='flex';
+    ['sd1','sd2','sd3'].forEach(id=>document.getElementById(id).classList.add('active'));
+  }
+}
+function toStep2(){
+  const acct=document.getElementById('acctDest').value.trim();
+  const benef=document.getElementById('benef').value.trim();
+  if(acct.length<5){toast('Ingresa una cuenta válida');return;}
+  if(!benef){toast('Falta el beneficiario');return;}
+  showStep(2);
+}
+let montoValue=0;
+function formatMonto(input){
+  let v=input.value.replace(/\D/g,'');
+  montoValue = parseInt(v||'0');
+  input.value = v ? '$'+montoValue.toLocaleString('es-CO').replace(/,/g,'.') : '';
+}
+function toStep3(){
+  if(montoValue<=0){toast('Ingresa un monto');return;}
+  if(montoValue>SALDO){toast('Saldo insuficiente');return;}
+  buildOTP();
+  showStep(3);
+}
+function buildOTP(){
+  const row=document.getElementById('otpRow');
+  row.innerHTML='';
+  for(let i=0;i<6;i++){
+    const inp=document.createElement('input');
+    inp.type='tel';inp.maxLength=1;inp.inputMode='numeric';
+    inp.oninput=()=>{
+      inp.value=inp.value.replace(/\D/g,'');
+      if(inp.value && i<5) row.children[i+1].focus();
+      checkOTP();
+    };
+    inp.onkeydown=(e)=>{ if(e.key==='Backspace'&&!inp.value&&i>0) row.children[i-1].focus(); };
+    row.appendChild(inp);
+  }
+  setTimeout(()=>row.children[0].focus(),200);
+}
+function checkOTP(){
+  const row=document.getElementById('otpRow');
+  if([...row.children].every(i=>i.value)){ setTimeout(completeTransfer,400); }
+}
+function completeTransfer(){
+  document.getElementById('exMonto').textContent = fmt(montoValue);
+  document.getElementById('exBenef').textContent = document.getElementById('benef').value;
+  document.getElementById('exAcct').textContent = (destType==='otro'? document.getElementById('bankSel').value+' · ':'') + document.getElementById('acctDest').value;
+  const now=new Date();
+  document.getElementById('exFecha').textContent = now.toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'})+' '+now.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('exComp').textContent = 'BDB'+Math.floor(Math.random()*9000000+1000000);
+  showStep(4);
+}
+function resetTransfer(){
+  destType='bdb';montoValue=0;
+  document.getElementById('acctDest').value='';
+  document.getElementById('benef').value='';
+  document.getElementById('montoInput').value='';
+  document.getElementById('descTransf').value='';
+  setDest(document.getElementById('ro1'),'bdb');
+  showStep(1);
+}
+function transferBack(){
+  const visible = ['tStep1','tStep2','tStep3','tSuccess'].find(id=>document.getElementById(id).style.display!=='none');
+  if(visible==='tStep2') showStep(1);
+  else if(visible==='tStep3') showStep(2);
+  else go('home');
+}
+function finishTransfer(){
+  toast('Transferencia registrada (ficticia)');
+  go('home');
+}
+
+/* ---------- Ripple ---------- */
+function ripple(el,e){
+  const r=document.createElement('span');
+  r.className='ripple';
+  const rect=el.getBoundingClientRect();
+  const size=Math.max(rect.width,rect.height);
+  r.style.width=r.style.height=size+'px';
+  r.style.left=((e.clientX||rect.left+rect.width/2)-rect.left-size/2)+'px';
+  r.style.top=((e.clientY||rect.top+rect.height/2)-rect.top-size/2)+'px';
+  el.appendChild(r);
+  setTimeout(()=>r.remove(),550);
+}
+document.addEventListener('click',(e)=>{
+  const b=e.target.closest('.btn');
+  if(b && !b.disabled) ripple(b,e);
+});
+
+/* ---------- Toast ---------- */
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ---------- Reloj / status bar ---------- */
+function tick(){
+  const n=new Date();
+  document.getElementById('clock').textContent =
+    n.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+}
+setInterval(tick,1000);tick();
+
+/* ---------- Pull to refresh (estético) en Home ---------- */
+(function(){
+  const home=document.getElementById('home');
+  const ptr=document.getElementById('ptr');
+  let startY=0, pulling=false;
+  home.addEventListener('touchstart',(e)=>{
+    if(home.scrollTop<=0){startY=e.touches[0].clientY;pulling=true;}
+  },{passive:true});
+  home.addEventListener('touchmove',(e)=>{
+    if(!pulling)return;
+    if(e.touches[0].clientY-startY>30){ptr.classList.add('show');}
+  },{passive:true});
+  home.addEventListener('touchend',()=>{
+    if(ptr.classList.contains('show')){
+      ptr.classList.add('spinning');
+      setTimeout(()=>{ptr.classList.remove('show','spinning');toast('Saldo actualizado');},1100);
+    }
+    pulling=false;
+  });
+})();
+
+/* ---------- Init ---------- */
+document.getElementById('loginLogo').innerHTML = logoSVG(64);
+document.getElementById('homeLogo').innerHTML = logoSVG(26) + '<span>Banca Móvil</span>';
+setGreeting();
+renderHome();
+renderAll();
+
+/* ---------- Service worker ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
