@@ -14,11 +14,11 @@ export const USER = {
 
 export const CUENTA = {
   nombre: 'Cuenta de Ahorros',
-  numeroCorto: '047 **** **** 4821',
-  numeroLargo: '047-123456-4821-00',
-  saldoDisponible: 635000000,
-  saldoTotal: 635000000,
-  estado: 'Activa'
+  numeroCorto: '···· 7-71',
+  numeroLargo: '0622281624',
+  saldoDisponible: 651240000,
+  saldoTotal: 651240000,
+  estado: 'En verificación'
 }
 
 

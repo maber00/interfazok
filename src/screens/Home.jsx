@@ -131,7 +131,7 @@ export default function Home({ go }) {
 
         {/* Aviso restricción — texto limpio, sin recuadro ni ícono */}
         <p className="text-[13px] text-[#B45309] font-semibold px-1">
-          Tu cuenta tiene una restricción temporal. Comunícate con tu asesor.
+          ⚠️ Tu cuenta está sujeta a verificación. Algunas operaciones están temporalmente restringidas. Comunícate con nosotros.
         </p>
 
         {/* Cuenta de Ahorros — estilo captura real: card blanca, borde izquierdo amarillo */}
@@ -146,13 +146,13 @@ export default function Home({ go }) {
             </div>
             <span className="text-gray-400 text-[18px] leading-none tracking-widest">···</span>
           </div>
-          <p className="text-[13px] text-gray-400 mb-3">No. {CUENTA.numeroLargo.replace(/-/g, '').slice(0, 9)}</p>
-          <p className="text-[12px] text-gray-400">Saldo disponible</p>
+          <p className="text-[13px] text-gray-400 mb-3">No. {CUENTA.numeroLargo}</p>
+          <p className="text-[12px] text-gray-400">Saldo total</p>
           <p className="text-[26px] font-extrabold text-gray-900 leading-tight">
-            {verSaldo ? cop(CUENTA.saldoDisponible) : '$  •••.•••.•••'}
+            {verSaldo ? cop(CUENTA.saldoTotal) : '$  •••.•••.•••'}
           </p>
           <p className="mt-2 text-[12px] text-[#B45309] font-semibold">
-            Restricción temporal · Comunícate con tu asesor
+            Cuenta sujeta a verificación · Comunícate con nosotros
           </p>
         </button>
 
