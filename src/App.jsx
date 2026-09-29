@@ -19,10 +19,12 @@ const SCREENS = {
 export default function App() {
   const [authed, setAuthed] = useState(false)
   const [screen, setScreen] = useState('home')
+  const [notisLeidas, setNotisLeidas] = useState(false)
 
   const handleLogout = () => {
     setAuthed(false)
     setScreen('home')
+    setNotisLeidas(false)
   }
 
   const Current = SCREENS[screen] || Home
@@ -59,7 +61,12 @@ export default function App() {
                   exit={{ opacity: 0, x: -24 }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}
                 >
-                  <Current go={setScreen} onLogout={handleLogout} />
+                  <Current
+                    go={setScreen}
+                    onLogout={handleLogout}
+                    notisLeidas={notisLeidas}
+                    onLeerNotis={() => setNotisLeidas(true)}
+                  />
                 </motion.div>
               </AnimatePresence>
             </div>

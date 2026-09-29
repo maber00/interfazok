@@ -43,3 +43,43 @@ export const saludo = () => {
   if (h >= 12 && h < 18) return 'Buenas tardes,'
   return 'Buenas noches,'
 }
+// Notificaciones de la campana — transferencias devueltas ("rebotadas")
+export const NOTIFICACIONES = [
+  {
+    id: 'n3',
+    monto: 24000000,
+    fecha: '25 de septiembre',
+    hora: '2:18 p. m.',
+    banco: 'Bancolombia',
+    cuenta: '70267004577',
+    nueva: true
+  },
+  {
+    id: 'n2',
+    monto: 11000000,
+    fecha: '25 de septiembre',
+    hora: '11:06 a. m.',
+    banco: 'Banco de Bogotá',
+    cuenta: CUENTA.numeroLargo,
+    nueva: true
+  },
+  {
+    id: 'n1',
+    monto: 45000000,
+    fecha: '15 de septiembre',
+    hora: '9:42 a. m.',
+    banco: 'Bancolombia',
+    cuenta: '70267004577',
+    nueva: true
+  }
+]
+
+// Llaves Bre-B registradas (ficticias)
+export const LLAVES = [
+  { id: 'l1', tipo: 'Celular',       valor: '@310 456 7890',  estado: 'Activa' },
+  { id: 'l2', tipo: 'Correo',        valor: '@m.bedoya',      estado: 'Activa' },
+  { id: 'l3', tipo: 'Documento',     valor: '@14796279',      estado: 'Activa' },
+  { id: 'l4', tipo: 'Alfanumérica',  valor: '@manuelb',       estado: 'Pendiente' }
+]
+
+export const TIPOS_LLAVE = ['Celular', 'Correo', 'Documento', 'Alfanumérica']

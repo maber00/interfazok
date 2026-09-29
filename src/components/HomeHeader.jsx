@@ -1,9 +1,16 @@
+import { useState } from 'react'
 import { LogoMark } from './Logo.jsx'
 import { Bell, Finanzas, Ayuda, Salida } from './Icons.jsx'
-import { saludo, USER } from '../data/mock.js'
+import Notificaciones from './Notificaciones.jsx'
+import { saludo, USER, NOTIFICACIONES } from '../data/mock.js'
 
-export default function HomeHeader({ onLogout }) {
+export default function HomeHeader({ onLogout, leidas, onLeer }) {
+  const [verNotis, setVerNotis] = useState(false)
+  const sinLeer = leidas ? 0 : NOTIFICACIONES.filter((n) => n.nueva).length
+
   return (
+    <>
+    {verNotis && <Notificaciones leidas={leidas} onClose={() => setVerNotis(false)} />}
     <div className="relative text-white overflow-hidden rounded-b-[28px]"
       style={{ background: 'linear-gradient(160deg, #1A4BAF 0%, #2563EB 60%, #3B82F6 100%)' }}
     >
@@ -25,7 +32,11 @@ export default function HomeHeader({ onLogout }) {
 
           {/* Acciones */}
           <div className="flex items-start gap-4 pt-1">
-            <HeaderIcon Icon={Bell} badge={3} />
+            <HeaderIcon
+              Icon={Bell}
+              badge={sinLeer}
+              onClick={() => { setVerNotis(true); onLeer() }}
+            />
             <HeaderIcon Icon={Finanzas} label="Finanzas" />
             <HeaderIcon Icon={Ayuda} label="Ayuda" />
             <HeaderIcon Icon={Salida} label="Salida" onClick={onLogout} />
@@ -33,6 +44,7 @@ export default function HomeHeader({ onLogout }) {
         </div>
       </div>
     </div>
+    </>
   )
 }
 
@@ -41,7 +53,7 @@ function HeaderIcon({ Icon, label, badge, onClick }) {
     <button onClick={onClick} className="flex flex-col items-center gap-1 text-white/90">
       <span className="relative">
         <Icon size={24} />
-        {badge && (
+        {badge > 0 && (
           <span className="absolute -top-1.5 -right-2 bg-bdb-rojo text-white text-[9px] font-bold min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
             {badge}
           </span>
